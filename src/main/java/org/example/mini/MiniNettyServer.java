@@ -1,10 +1,15 @@
-package org.example.nettyio;
+package org.example.mini;
 
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
+import org.example.handlers.FirstServerHandler;
 
 public class MiniNettyServer {
     public static void main(String[] args) {
@@ -21,9 +26,19 @@ public class MiniNettyServer {
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {
                     protected void initChannel(NioSocketChannel ch) {
                         // 业务代码
-
+                        ch.pipeline().addLast(new FirstServerHandler());
                     }
         });
-        serverBootstrap.bind(8000);
+        bindPort(serverBootstrap, 1001);
+    }
+
+    private static void bindPort(ServerBootstrap serverBootstrap, final int port) {
+        serverBootstrap.bind(port).addListener(future -> {
+            if(future.isSuccess()) {
+                System.out.println("Binding port: "+port);
+            } else {
+                bindPort(serverBootstrap, port+1);
+            }
+        });
     }
 }
